@@ -71,7 +71,7 @@ internal class RabbitMQProducer : IMessageProducer
 
                     //SendMessage(msg);
                     Send(msg);
-                    Console.WriteLine($"Producer {p.Item1} sent \t battery: {msg.Battery} \t: {DateTime.Now:HH:mm:ss}");
+                    Console.WriteLine($"Producer {p.Item1} sent \t battery: {msg.Battery} \t {DateTime.Now:HH:mm:ss}");
                     await Task.Delay(random.Next(100, 700));
                 }
             }
