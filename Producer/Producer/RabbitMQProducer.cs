@@ -7,12 +7,16 @@ namespace Producer.Producer;
 internal class RabbitMQProducer : IMessageProducer
 {
     private readonly IConnection _connection;
-    private readonly IEnumerable<string> _producerImeis;
+    private readonly IEnumerable<(string, double, double)> _producers;
     private readonly IModel _channel;
 
-    public RabbitMQProducer(IEnumerable<string> producerImeis)
+    public RabbitMQProducer(int numberOfProducers)
     {
-        _producerImeis = producerImeis;
+        _producers = Enumerable
+             .Range(0, numberOfProducers)
+             .Select(x => (DataGenerator.GenerateRandomImei(), DataGenerator.GenerateRandomCoord(), DataGenerator.GenerateRandomCoord()))
+             .Distinct()
+             .ToArray();
 
         Console.WriteLine($"Producer started.");
 
@@ -55,17 +59,19 @@ internal class RabbitMQProducer : IMessageProducer
         {
             while (true)
             {
-                foreach (var imei in _producerImeis)
+                foreach (var p in _producers)
                 {
                     var msg = new AtlasUpdate
                     {
-                        Imei = imei,
-                        Payload = $"Hola at {DateTime.Now:HH:mm:ss}"
+                        Imei = p.Item1,
+                        Long = p.Item2,
+                        Lat = p.Item3,
+                        Battery = random.Next(1, 100),
                     };
 
                     //SendMessage(msg);
                     Send(msg);
-                    Console.WriteLine($"Producer {imei} sent new message as: {DateTime.Now:HH:mm:ss}");
+                    Console.WriteLine($"Producer {p.Item1} sent \t battery: {msg.Battery} \t: {DateTime.Now:HH:mm:ss}");
                     await Task.Delay(random.Next(100, 700));
                 }
             }
