@@ -14,7 +14,10 @@ internal class RabbitMQProducer : IMessageProducer
     {
         _producers = Enumerable
              .Range(0, numberOfProducers)
-             .Select(x => (DataGenerator.GenerateRandomImei(), DataGenerator.GenerateRandomCoord(), DataGenerator.GenerateRandomCoord()))
+             .Select(x => (
+                DataGenerator.GenerateRandomImei(),
+                DataGenerator.GenerateRandomCoord(-8.3, 3.1),
+                DataGenerator.GenerateRandomCoord(36.0, 43.8)))
              .Distinct()
              .ToArray();
 

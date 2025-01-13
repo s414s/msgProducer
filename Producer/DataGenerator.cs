@@ -14,13 +14,9 @@ internal static class DataGenerator
         return string.Join("", imei);
     }
 
-    public static double GenerateRandomCoord()
+    public static double GenerateRandomCoord(double min, double max)
     {
         var random = new Random();
-
-        double min = -80.0;
-        double max = 80.0;
-
         return random.NextDouble() * (max - min) + min;
     }
 }
