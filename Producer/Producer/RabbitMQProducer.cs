@@ -1,18 +1,20 @@
 ﻿using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Channels;
 
 namespace Producer.Producer;
 
 internal class RabbitMQProducer : IMessageProducer
 {
-    private readonly IConnection _connection;
-    private readonly IEnumerable<(string, double, double)> _producers;
-    private readonly IModel _channel;
+    private readonly IEnumerable<(string, double, double)> _items;
+    private IConnection? _connection;
+    private IChannel? _channel;
+    private readonly ConnectionFactory _factory;
 
     public RabbitMQProducer(int numberOfProducers)
     {
-        _producers = Enumerable
+        _items = Enumerable
              .Range(0, numberOfProducers)
              .Select(x => (
                 DataGenerator.GenerateRandomImei(),
@@ -23,7 +25,7 @@ internal class RabbitMQProducer : IMessageProducer
 
         Console.WriteLine($"Producer started.");
 
-        var factory = new ConnectionFactory()
+        _factory = new ConnectionFactory()
         {
             // HostName = "rabbitmq",
             // Use the container name OR if running the app locally:
@@ -41,28 +43,35 @@ internal class RabbitMQProducer : IMessageProducer
         //{
         //    Uri = new Uri("amqp://guest:guest@localhost:5672")
         //};
+    }
 
+    public async Task Start()
+    {
         try
         {
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
+            _connection = await _factory.CreateConnectionAsync();
+            _channel = await _connection.CreateChannelAsync();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Connection Error: {ex.Message}");
             throw;
         }
-    }
-
-    public async Task Start()
-    {
         var random = new Random();
+
+        //await _channel.ExchangeDeclareAsync(exchange: "logs", type: ExchangeType.Fanout);
+
+        await _channel.QueueDeclareAsync(queue: "atlas",
+                                durable: false,
+                                exclusive: false,
+                                autoDelete: false,
+                                arguments: null);
 
         try
         {
             while (true)
             {
-                foreach (var p in _producers)
+                foreach (var p in _items)
                 {
                     var msg = new AtlasUpdate
                     {
@@ -72,12 +81,19 @@ internal class RabbitMQProducer : IMessageProducer
                         Battery = random.Next(1, 100),
                     };
 
-                    //SendMessage(msg);
-                    Send(msg);
+                    var json = JsonSerializer.Serialize(msg);
+                    var body = Encoding.UTF8.GetBytes(json);
+
+                    await _channel.BasicPublishAsync(
+                        exchange: "",
+                        routingKey: "atlas",
+                        mandatory: true,
+                        body: body);
+
                     Console.WriteLine($"Producer {p.Item1} sent \t battery: {msg.Battery} \t {DateTime.Now:HH:mm:ss}");
 
                     //await Task.Delay(random.Next(100, 700));
-                    await Task.Delay(random.Next(1, 10));
+                    //await Task.Delay(random.Next(1, 10));
                 }
             }
         }
@@ -90,43 +106,5 @@ internal class RabbitMQProducer : IMessageProducer
             _channel?.Dispose();
             _connection?.Dispose();
         }
-    }
-
-    public void SendMessage<T>(T message)
-    {
-        using (var channel = _connection.CreateModel())
-        {
-            channel.QueueDeclare(queue: "atlas",
-                                    durable: false,
-                                    exclusive: false,
-                                    autoDelete: false,
-                                    arguments: null);
-
-            var json = JsonSerializer.Serialize(message);
-            var body = Encoding.UTF8.GetBytes(json);
-
-            channel.BasicPublish(exchange: "",
-                                    routingKey: "atlas",
-                                    basicProperties: null,
-                                    body: body);
-        }
-    }
-
-    public void Send<T>(T message)
-    {
-        _channel.QueueDeclare(queue: "atlas",
-                                durable: false,
-                                exclusive: false,
-                                autoDelete: false,
-                                arguments: null);
-
-        var json = JsonSerializer.Serialize(message);
-        var body = Encoding.UTF8.GetBytes(json);
-
-        _channel.BasicPublish(exchange: "",
-                                routingKey: "atlas",
-                                basicProperties: null,
-                                body: body);
-
     }
 }

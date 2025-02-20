@@ -2,5 +2,5 @@
 
 internal interface IMessageProducer
 {
-    void SendMessage<T>(T message);
+    //void SendMessage<T>(T message);
 }
