@@ -2,7 +2,7 @@
 //https://medium.com/@simo.matijevic/produce-and-consume-messages-with-rabbitmq-and-net-core-api-9d733f93c145
 using Producer.Producer;
 
-var numberOfProducers = 5000;
+var numberOfProducers = 10_000;
 Console.WriteLine($"Starting {numberOfProducers} producers with varying rates...");
 
 var producer = new RabbitMQProducer(numberOfProducers);
