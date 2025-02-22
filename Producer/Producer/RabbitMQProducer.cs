@@ -1,5 +1,6 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Stream.Client.AMQP;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 
@@ -59,8 +60,26 @@ internal class RabbitMQProducer : IMessageProducer
 
         await _channel.ExchangeDeclareAsync(exchange: "myAtlasExchange", type: ExchangeType.Direct, autoDelete: false, durable: true);
 
-        await _channel.QueueDeclareAsync(queue: "atlas", durable: true, exclusive: false, autoDelete: false);
-        await _channel.QueueDeclareAsync(queue: "atlas2", durable: true, exclusive: false, autoDelete: false);
+        //Using a Dead Letter Exchange(DLX)
+        var args = new Dictionary<string, object?>
+        {
+            { "x-dead-letter-exchange", "deadLetterExchange" },
+            { "x-dead-letter-routing-key", "deadLetterQueue" } // optional: if you want to override the routing key
+        };
+
+        await _channel.QueueDeclareAsync(
+            queue: "atlas",
+            durable: true,
+            exclusive: false,
+            arguments: args,
+            autoDelete: false);
+
+        await _channel.QueueDeclareAsync(
+            queue: "atlas2",
+            durable: true,
+            exclusive: false,
+            arguments: args,
+            autoDelete: false);
 
         await _channel.QueueBindAsync(queue: "atlas", exchange: "myAtlasExchange", routingKey: "atlas");
         await _channel.QueueBindAsync(queue: "atlas2", exchange: "myAtlasExchange", routingKey: "atlas2");
