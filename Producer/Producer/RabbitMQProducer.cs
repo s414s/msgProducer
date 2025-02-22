@@ -71,14 +71,14 @@ internal class RabbitMQProducer : IMessageProducer
             queue: "atlas",
             durable: true,
             exclusive: false,
-            arguments: args,
+            //arguments: args,
             autoDelete: false);
 
         await _channel.QueueDeclareAsync(
             queue: "atlas2",
             durable: true,
             exclusive: false,
-            arguments: args,
+            //arguments: args,
             autoDelete: false);
 
         await _channel.QueueBindAsync(queue: "atlas", exchange: "myAtlasExchange", routingKey: "atlas");
