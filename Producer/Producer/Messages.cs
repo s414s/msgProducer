@@ -1,6 +1,6 @@
 ﻿namespace Producer.Producer;
 
-internal record AtlasUpdate
+internal readonly struct AtlasUpdate
 {
     public required string Imei { get; init; }
     public required double Long { get; init; }

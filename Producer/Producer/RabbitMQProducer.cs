@@ -1,7 +1,6 @@
 ﻿using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Channels;
 
 namespace Producer.Producer;
 
@@ -56,30 +55,16 @@ internal class RabbitMQProducer : IMessageProducer
             Console.WriteLine($"Connection Error: {ex.Message}");
             throw;
         }
-        var random = new Random();
 
-        await _channel.ExchangeDeclareAsync(
-            exchange: "myAtlasExchange",
-            type: ExchangeType.Direct,
-            autoDelete: false,
-            durable: true);
+        await _channel.ExchangeDeclareAsync(exchange: "myAtlasExchange", type: ExchangeType.Direct, autoDelete: false, durable: true);
 
-        await _channel.QueueDeclareAsync(
-            queue: "atlas",
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
-
-        await _channel.QueueDeclareAsync(
-            queue: "atlas2",
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
+        await _channel.QueueDeclareAsync(queue: "atlas", durable: true, exclusive: false, autoDelete: false);
+        await _channel.QueueDeclareAsync(queue: "atlas2", durable: true, exclusive: false, autoDelete: false);
 
         await _channel.QueueBindAsync(queue: "atlas", exchange: "myAtlasExchange", routingKey: "atlas");
         await _channel.QueueBindAsync(queue: "atlas2", exchange: "myAtlasExchange", routingKey: "atlas2");
+
+        var random = new Random();
 
         try
         {
@@ -104,13 +89,14 @@ internal class RabbitMQProducer : IMessageProducer
                     var props = new BasicProperties
                     {
                         DeliveryMode = DeliveryModes.Persistent,
-                        //Priority = 0,
-                        //ContentType = "application/json",
+                        MessageId = new Guid().ToString(),
+                        Timestamp = new AmqpTimestamp(new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds()),
+                        ContentType = "application/json",
+                        Priority = 0,
                     };
 
                     await _channel.BasicPublishAsync(
                         exchange: "myAtlasExchange",
-                        //routingKey: "atlas",
                         routingKey: queueName,
                         mandatory: true,
                         basicProperties: props,
