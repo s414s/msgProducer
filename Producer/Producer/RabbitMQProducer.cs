@@ -28,8 +28,7 @@ internal class RabbitMQProducer : IMessageProducer
         _factory = new ConnectionFactory()
         {
             // HostName = "rabbitmq",
-            // Use the container name OR if running the app locally:
-            HostName = "localhost",
+            HostName = "localhost", // Use the container name OR if running the app locally:
             Port = 5672,
             UserName = "guest",
             Password = "guest",
@@ -61,11 +60,19 @@ internal class RabbitMQProducer : IMessageProducer
 
         //await _channel.ExchangeDeclareAsync(exchange: "logs", type: ExchangeType.Fanout);
 
-        await _channel.QueueDeclareAsync(queue: "atlas",
-                                durable: false,
-                                exclusive: false,
-                                autoDelete: false,
-                                arguments: null);
+        await _channel.QueueDeclareAsync(
+            queue: "atlas",
+            durable: false,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
+
+        await _channel.QueueDeclareAsync(
+            queue: "atlas2",
+            durable: false,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
 
         try
         {
@@ -84,9 +91,13 @@ internal class RabbitMQProducer : IMessageProducer
                     var json = JsonSerializer.Serialize(msg);
                     var body = Encoding.UTF8.GetBytes(json);
 
+                    var queueKey = random.Next(0, 2);
+                    var queueName = queueKey == 0 ? "atlas" : "atlas2";
+
                     await _channel.BasicPublishAsync(
                         exchange: "",
-                        routingKey: "atlas",
+                        //routingKey: "atlas",
+                        routingKey: queueName,
                         mandatory: true,
                         body: body);
 

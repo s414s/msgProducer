@@ -31,15 +31,12 @@ public class RabbitMQStreamProducer
     {
         var config = new StreamSystemConfig()
         {
-            //HostName = "localhost",
-            //Port = 5672,
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
             Endpoints =
             [
                 new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5552), // Atention!! different port for streams
-                //new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5672), // Atention!! different port for streams
             ]
         };
 

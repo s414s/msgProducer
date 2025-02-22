@@ -5,11 +5,11 @@ using Producer.Producer;
 var numberOfProducers = 10_000;
 Console.WriteLine($"Starting {numberOfProducers} producers with varying rates...");
 
-//var producer = new RabbitMQProducer(numberOfProducers);
-//await producer.Start();
-
-var producer = new RabbitMQStreamProducer(numberOfProducers);
+var producer = new RabbitMQProducer(numberOfProducers);
 await producer.Start();
+
+//var producer = new RabbitMQStreamProducer(numberOfProducers);
+//await producer.Start();
 
 Console.WriteLine("Press [Enter] to exit.");
 Console.ReadLine();
