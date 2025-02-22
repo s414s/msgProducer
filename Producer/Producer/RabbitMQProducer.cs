@@ -1,4 +1,5 @@
 ﻿using RabbitMQ.Client;
+using RabbitMQ.Stream.Client.AMQP;
 using System.Text;
 using System.Text.Json;
 
@@ -93,6 +94,11 @@ internal class RabbitMQProducer : IMessageProducer
                         Timestamp = new AmqpTimestamp(new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds()),
                         ContentType = "application/json",
                         Priority = 0,
+                        Headers = new Dictionary<string, object?>
+                        {
+                            { "return-queue", $"{queueName}-retry" },
+                            { "deadletter-queue", $"{queueName}-deadletter" },
+                        },
                     };
 
                     await _channel.BasicPublishAsync(
