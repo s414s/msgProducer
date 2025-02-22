@@ -58,21 +58,28 @@ internal class RabbitMQProducer : IMessageProducer
         }
         var random = new Random();
 
-        //await _channel.ExchangeDeclareAsync(exchange: "logs", type: ExchangeType.Fanout);
+        await _channel.ExchangeDeclareAsync(
+            exchange: "myAtlasExchange",
+            type: ExchangeType.Direct,
+            autoDelete: false,
+            durable: true);
 
         await _channel.QueueDeclareAsync(
             queue: "atlas",
-            durable: false,
+            durable: true,
             exclusive: false,
             autoDelete: false,
             arguments: null);
 
         await _channel.QueueDeclareAsync(
             queue: "atlas2",
-            durable: false,
+            durable: true,
             exclusive: false,
             autoDelete: false,
             arguments: null);
+
+        await _channel.QueueBindAsync(queue: "atlas", exchange: "myAtlasExchange", routingKey: "atlas");
+        await _channel.QueueBindAsync(queue: "atlas2", exchange: "myAtlasExchange", routingKey: "atlas2");
 
         try
         {
@@ -94,11 +101,19 @@ internal class RabbitMQProducer : IMessageProducer
                     var queueKey = random.Next(0, 2);
                     var queueName = queueKey == 0 ? "atlas" : "atlas2";
 
+                    var props = new BasicProperties
+                    {
+                        DeliveryMode = DeliveryModes.Persistent,
+                        //Priority = 0,
+                        //ContentType = "application/json",
+                    };
+
                     await _channel.BasicPublishAsync(
-                        exchange: "",
+                        exchange: "myAtlasExchange",
                         //routingKey: "atlas",
                         routingKey: queueName,
                         mandatory: true,
+                        basicProperties: props,
                         body: body);
 
                     Console.WriteLine($"Producer {p.Item1} sent \t battery: {msg.Battery} \t {DateTime.Now:HH:mm:ss}");
